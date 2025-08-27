@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+dashboard/node_modules/
+dashboard/.next/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build outputs  
+dist/
+build/
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+
+# IDE & OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
