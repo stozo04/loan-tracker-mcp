@@ -12,8 +12,8 @@
 //
 // NOTE: This file does NOT use a shared supabase client. It uses plain fetch per call.
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const FUNCTION_NAME = "loan-manager";
 
 // ───────────────────────────────────────────────────────────────────────────────
@@ -68,13 +68,13 @@ export type DeleteLoanOk = Ok<{ loan_id: string }>;
 async function getBearer(): Promise<string> {
   // If/when you add Supabase Auth on the client, swap to prefer the user’s access_token.
   // For now, anon key is a valid JWT for verify_jwt=true functions.
-  return SUPABASE_ANON_KEY;
+  return NEXT_PUBLIC_SUPABASE_ANON_KEY;
 }
 
 async function callEdge<T>(body: unknown): Promise<T> {
   const token = await getBearer();
 
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`, {
+  const res = await fetch(`${NEXT_PUBLIC_SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -123,7 +123,7 @@ export function addPayment(params: {
   loan_id?: string;      // preferred
   loan_name?: string;    // optional fallback
   amount: number;
-  paid_by?: PaidBy;      // default handled server-side ("Steven")
+  paid_by?: PaidBy;      // default handled server-side ("Steven"); also "I" maps to "Steven"
   payment_date?: string; // YYYY-MM-DD
 }) {
   return callEdge<AddPaymentOk>({ action: "add_payment", ...params });

@@ -1,85 +1,78 @@
 # Loan Tracker (MCP)
 
-Lightweight loan tracking with a Next.js dashboard, Supabase Edge Function, and a small MCP (Model Context Protocol) helper layer for AI-driven interactions.
+Lightweight loan tracking with a Next.js dashboard, a Supabase Edge Function, and a small helper layer for AI-driven interactions.
 
 This repository contains:
 
-- A Next.js dashboard in `dashboard/` (frontend UI).
-- Supabase Edge Function(s) in `supabase/functions/loan-manager` (loan + payment API).
-- A small MCP / helper client in `src/` that calls the Edge Function and derives dashboard data.
-- Quick test scripts in the repo root (e.g., `test-*.js`).
+- `dashboard/` – Next.js app (frontend UI)
+- `supabase/functions/loan-manager/` – Deno Edge Function (loan + payment API)
+- `src/` – Node/TypeScript helpers and derived metrics
+- `test-*.js` – quick smoke scripts in the repo root
 
-> Contributing & Agents: If you’re a coding agent or a new teammate, start with `AGENTS.md` for project conventions, security notes, test/run commands, and deployment steps.
+> Contributing & Agents: If you're a coding agent or a new teammate, start with `AGENTS.md` for conventions, security notes, run/build commands, and deployment steps.
 
 ## Goals
 
 - Track loans and payments for multiple people.
-- Provide a beautiful dashboard UI for viewing loans, payments, and trends.
+- Provide a clean dashboard UI to visualize progress and trends.
 - Offer a single Edge Function (`loan-manager`) to create loans, add payments, list loans, and delete loans.
-- Support simple AI-driven flows via the MCP client.
+- Support AI-driven flows via a simple helper API.
 
-## Tech stack
+## Tech Stack
 
-- Frontend: Next.js (app router), TypeScript, Tailwind CSS
+- Frontend: Next.js (App Router), TypeScript, Tailwind CSS
 - Backend: Supabase (Postgres + Edge Functions on Deno)
-- Client / helpers: Node + TypeScript (root `src/`)
-- Dev tooling: tsx, nodemon, TypeScript
+- Helpers: Node + TypeScript (root `src/`)
+- Tooling: tsx, nodemon, TypeScript
 
-## Project layout (short)
+## Project Layout
 
-- `dashboard/` — Next.js app (frontend). Use `dashboard/package.json` scripts to run.
-- `supabase/functions/loan-manager/` — Deno Edge Function source for loan management.
-- `src/` — MCP helpers + small client (`index.ts`, `database.ts`).
-- `test-*.js` — small test scripts to exercise the function(s).
-- `package.json` — root scripts to run the MCP helper locally.
+- `dashboard/` – Next.js app (frontend). Use `dashboard/package.json` scripts to run.
+- `supabase/functions/loan-manager/` – Deno Edge Function source for loan management.
+- `src/` – Helpers + small client (`index.ts`, `database.ts`).
+- `test-*.js` – Small test scripts to exercise the function(s).
+- `package.json` – Root scripts to run the helper locally.
 
-## Quick start (development)
+## Quick Start (Development)
 
-1. Clone the repo and install root deps:
+1) Install dependencies
 
 ```bash
-git clone https://github.com/stozo04/loan-tracker-mcp.git
-cd loan-tracker-mcp
-npm install
+# Root
+npm i
+
+# Dashboard
+cd dashboard && npm i
 ```
 
-2. Install dashboard dependencies and run the frontend:
+2) Start development
 
 ```bash
-cd dashboard
-npm install
+# Root helpers (from repo root)
+npm run dev
+
+# Dashboard (from dashboard/)
 npm run dev
 ```
 
-The dashboard runs on http://localhost:3000 by default.
+The dashboard runs on http://localhost:3000.
 
-3. Run the local MCP helper / dev server (root):
-
-```bash
-# from repo root
-npm run dev
-```
-
-That starts the TypeScript MCP helper (see `src/index.ts`) which calls the deployed Edge Function.
-
-4. Use tests to exercise the API locally (these assume you have a deployed Edge Function or valid SUPABASE env):
+3) Optional: Supabase CLI (to deploy the Edge Function)
 
 ```bash
-node test-edge-function.js
-node test-create-loan.js
-node test-payment.js
-node test-full-flow.js
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
 ```
 
-## Environment variables
+## Environment Variables
 
-Create a `.env` file in the project root and `dashboard/.env.local` for the Next.js app.
+Create a `.env` in the project root and `dashboard/.env.local` for the Next.js app.
 
-Root `.env` (used by the MCP helpers and tests):
+Root `.env` (used by helpers and smoke scripts):
 
 ```
-SUPABASE_URL=https://<your-project>.supabase.co
-SUPABASE_ANON_KEY=<your-anon-key-or-service-key>
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key-or-service-key>
 ```
 
 Dashboard `dashboard/.env.local`:
@@ -89,15 +82,29 @@ NEXT_PUBLIC_SUPABASE_URL=https://<your-project>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
-Notes:
-- The Edge Function expects callers to forward an Authorization Bearer token so RLS policies (if enabled) work. The repo uses the anon key for simple setups.
-- For production, prefer a service_role or proper auth tokens where appropriate.
+Notes
+- The Edge Function expects callers to send `Authorization: Bearer <JWT>` so RLS can apply. For simple setups, the anon key works.
+- For production, prefer authenticated user tokens or a server-side context.
 
-## Database (recommended schema)
+## Using Shared Helpers from the Dashboard
+
+The dashboard imports types and helpers from the root `src/index.ts` to keep derivation logic canonical. Use relative paths based on the importing file location.
+
+Examples
+- From a component under `dashboard/src/components`:
+  `import { deriveLoan, type Loan as LoanRow } from '../../../src/index'`
+- From a hook under `dashboard/src/lib/hooks`:
+  `import { deriveLoan, type Loan as LoanRow, type LoanComputed } from '../../../../src/index'`
+
+Please do not duplicate derivation logic in the dashboard. Use `deriveLoan`, `summarizePortfolio`, and related exports from the shared module.
+
+Build note: Next.js may warn about multiple lockfiles and infer the workspace root. You can ignore this, remove `dashboard/package-lock.json`, or set `turbopack.root` in `dashboard/next.config.ts` to silence the warning.
+
+## Database (Recommended Schema)
 
 This project expects two tables: `loan_tracker_loans` and `loan_tracker_payments`.
 
-Example SQL (run in Supabase SQL editor):
+Example SQL
 
 ```sql
 create extension if not exists pgcrypto;
@@ -124,10 +131,9 @@ CREATE TABLE loan_tracker_payments (
 );
 ```
 
-Optional: an RPC used by the Edge Function called `decrement_loan_balance` (the function falls back to a read+update if the RPC is missing):
+Optional RPC used by the Edge Function (falls back to read+update if missing):
 
 ```sql
--- Example RPC (Postgres plpgsql):
 create or replace function decrement_loan_balance(p_loan_id uuid, p_amount numeric) returns void as $$
 begin
   update loan_tracker_loans
@@ -141,139 +147,74 @@ Enable Row Level Security if you use RLS and add policies that match your auth m
 
 ## Edge Function API (loan-manager)
 
-Base URL: POST https://<your-project>.supabase.co/functions/v1/loan-manager
+Base URL: `POST https://<your-project>.supabase.co/functions/v1/loan-manager`
 
-Request body actions (JSON):
+Request bodies (JSON)
+- Create loan: `{ "action": "create_loan", "name": string, "original_amount": number, "loan_date": "YYYY-MM-DD", "term_months": number, "loan_type": string }`
+- Add payment: `{ "action": "add_payment", "loan_id": uuid | "loan_name": string, "amount": number, "paid_by": "Steven|Katerina", "payment_date": "YYYY-MM-DD" }`
+- Get loans: `{ "action": "get_loans" }`
+- Delete loan: `{ "action": "delete_loan", "loan_id": uuid | "loan_name": string }`
 
-- Create loan:
-  { "action": "create_loan", "name": "string", "original_amount": number, "loan_date": "YYYY-MM-DD", "term_months": number, "loan_type": "string" }
+Response shape
+- Success: `{ success: true, data: ... }`
+- Error: `{ success: false, error: "message" }`
 
-- Add payment:
-  { "action": "add_payment", "loan_id": "uuid" | "loan_name": "string", "amount": number, "paid_by": "Steven|Katerina", "payment_date": "YYYY-MM-DD" }
-
-- Get loans:
-  { "action": "get_loans" }
-
-- Delete loan:
-  { "action": "delete_loan", "loan_id": "uuid" | "loan_name": "string" }
-
-Response shape:
-
-- Success: { success: true, data: ... }
-- Error:   { success: false, error: "message" }
-
-Example (add a payment):
+Example (add a payment)
 
 ```bash
 curl -X POST https://<your-project>.supabase.co/functions/v1/loan-manager \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+  -H "Authorization: Bearer $NEXT_PUBLIC_SUPABASE_ANON_KEY" \
   -d '{"action":"add_payment","loan_name":"New Couch","amount":200,"paid_by":"Steven"}'
 ```
 
-## Scripts (root)
+## Scripts
 
 From the repo root (see `package.json`):
 
-- npm run dev — runs the MCP helper locally via nodemon + tsx
-- npm run start — run `tsx src/index.ts`
-- npm run build — compile TypeScript (tsc)
+- `npm run dev` – runs the helper locally via nodemon + tsx
+- `npm run start` – run `tsx src/index.ts`
+- `npm run build` – compile TypeScript (tsc)
 
-Dashboard scripts live in `dashboard/package.json` (use `npm run dev`, `npm run build`, etc.).
+Dashboard scripts live in `dashboard/package.json`.
 
 ## Deploy
 
-- Dashboard: Deploy the `dashboard/` folder to Vercel (set the project root to `dashboard` in the Vercel project settings). Add the `NEXT_PUBLIC_SUPABASE_*` env vars in the Vercel dashboard.
-
-- Edge Function: Use the Supabase CLI to deploy the function in `supabase/functions/loan-manager`:
+- Dashboard: Deploy the `dashboard/` folder to Vercel (project root = `dashboard`). Add `NEXT_PUBLIC_SUPABASE_*` env vars in Vercel.
+- Edge Function: Use the Supabase CLI to deploy `supabase/functions/loan-manager`:
 
 ```bash
-# login & link
 npx supabase login
 npx supabase link --project-ref <your-project-ref>
-
-# deploy the loan-manager function
 npx supabase functions deploy loan-manager
 ```
 
-## Tests / smoke checks
+## Tests / Smoke Checks
 
-The repo contains small smoke-test scripts at the project root (e.g., `test-edge-function.js`, `test-create-loan.js`, `test-payment.js`, `test-full-flow.js`). They call the deployed Edge Function and expect a functioning Supabase backend.
-
-Run them with:
+These call the deployed Edge Function and expect a functioning Supabase backend:
 
 ```bash
 node test-edge-function.js
+node test-create-loan.js
+node test-payment.js
+node test-full-flow.js
 ```
 
-Adjust env vars or the test files if you use different endpoints or keys.
+## AI-only Chat (POC)
 
-## Notes & next steps
+This repo supports a POC where an AI assistant issues all app actions. The dashboard can stay open for visualization, while the assistant calls the Edge Function with the same action objects described above.
 
-- The MCP helper in `src/index.ts` contains helpful derivation code for the dashboard (progress %, projected payoff, portfolio summary).
-- The Edge Function is implemented in Deno at `supabase/functions/loan-manager/index.ts`.
-- Consider adding CI checks to run the smoke tests against a staging Supabase project.
-
-## AI-only chat (POC): interact with the app via OpenAI
-
-This repository supports a proof-of-concept mode where all user interactions are done through an AI chat interface (OpenAI or similar). In this POC the UI is intentionally passive: users talk to the AI, and the AI issues API calls (via the MCP helper or directly to the Edge Function) to create loans, add payments, list loans, and so on.
-
-Why this exists
-- Demonstrates an "AI-first" interaction model where the app surface is controlled by an assistant.
-- Useful for experiments, accessibility, or voice-driven controls.
-
-Behavior and UX (POC)
-- The dashboard can be left open for visualization, but all state changes should originate from the chat assistant.
-- The assistant sends structured commands to the Edge Function (`loan-manager`) using the same action objects documented above (create_loan, add_payment, get_loans, delete_loan).
-- Responses from the Edge Function are returned to the chat and can be rendered or summarized by the assistant.
-
-How to enable (local POC)
-1. Provide your OpenAI key (or other provider) to the MCP helper or a small server-side bridge. Never put this key in client-side code.
-
-Root `.env` additions (example):
-
-```
-OPENAI_API_KEY=sk-...
-AI_ONLY_MODE=true    # optional: a flag your local MCP helper can check
-```
-
-2. Implement or enable a small bridge in `src/` (or your own server) that:
-  - Accepts chat messages from you (CLI, local UI, or an external assistant session).
-  - Sends the message to OpenAI (or the model of your choice) and receives the assistant reply.
-  - Parses structured commands from the assistant and calls the Edge Function with the appropriate action payloads.
-
-Notes:
-- This repo includes `src/index.ts` which already contains helpers to call the Edge Function; you can adapt it to forward chat-derived commands.
-- If you want a fully managed MCP flow, you can replace the OpenAI calls with an MCP-enabled model or adapter.
-
-Security & safety
-- Never expose `OPENAI_API_KEY` or `SUPABASE_ANON_KEY` in the browser.
-- Use server-side validation on the Edge Function where appropriate (validate amounts, dates, and who may modify loans).
-- Consider adding an allow-list of assistant commands or requiring a secondary approval step before destructive actions (e.g., delete_loan).
-
-Example assistant prompts (POC)
-- "Create a loan named 'IKEA Couch' for $1200 with 12 months starting 2025-08-01"
-- "Record a $150 payment toward 'IKEA Couch' from Katerina on 2025-08-10"
-- "Show me all loans and how much is left to pay"
-
-Small contract for the POC bridge
-- Input: plain chat text (string) or a structured assistant object with intent.
-- Output: Edge Function action objects (JSON) and assistant-friendly summaries.
-- Error modes: malformed commands, invalid amounts, or unknown loan names should be converted into assistant replies explaining the problem.
-
-Next steps for production
-- Add authentication and a server-side chat broker to sign/verify commands.
-- Create an approvals flow for destructive actions.
-- Add audit logging for assistant-initiated changes.
+Security
+- Never expose `OPENAI_API_KEY` or `NEXT_PUBLIC_SUPABASE_ANON_KEY` in the browser.
+- Prefer server-side calls and validation.
 
 ## Contributing
 
-Feel free to open issues or PRs. Keep changes small and provide tests where appropriate.
+Small, focused PRs are welcome. See `AGENTS.md` for workflow and Definition of Done.
 
 ## License
 
 MIT
 
----
+— Made by Steven Gates (stozo04)
 
-Made by Steven Gates (stozo04)

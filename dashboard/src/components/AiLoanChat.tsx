@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { callLoanManager } from "@/lib/loan-manager";
+import { deriveLoan as deriveLoanShared, type Loan as LoanRow } from "../../../src/index";
 import { MessageCircle, X, Send, Loader2, CheckCircle, AlertCircle, Bot, Wallet, LineChart, Coins } from "lucide-react";
 import {
     PieChart,
@@ -14,9 +15,7 @@ type GetLoansParamsUI = { loan_name?: string };
 // ────────────────────────────────────────────────────────────
 // Env + Edge Function Caller (no shared supabase client)
 // ────────────────────────────────────────────────────────────
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-const FUNCTION_NAME = "loan-manager";
+// Edge Function calls are centralized in @/lib/loan-manager
 
 function getOrCreateSessionId(): string {
     if (typeof window === "undefined") return crypto.randomUUID();
@@ -29,29 +28,7 @@ function getOrCreateSessionId(): string {
     return id;
   }
 
-async function callLoanManager(body: unknown) {
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-        console.warn("Supabase env missing. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY");
-    }
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-            "x-client-info": "loan-tracker-ui",
-        },
-        body: JSON.stringify(body),
-    });
-    let json: any = null;
-    try {
-        json = await res.json();
-    } catch { }
-    if (!res.ok) {
-        const msg = (json && (json.error || json.message)) || `${res.status} ${res.statusText}`;
-        throw new Error(msg);
-    }
-    return json;
-}
+// callLoanManager is imported from @/lib/loan-manager
 
 // ────────────────────────────────────────────────────────────
 export type PaidBy = "Steven" | "Katerina";
@@ -63,19 +40,7 @@ export interface Payment {
     payment_date: string; // YYYY-MM-DD
     created_at?: string;
 }
-export interface Loan {
-    id: string;
-    name: string;
-    original_amount: number;
-    current_balance: number;
-    loan_type?: string;
-    term_months?: number;
-    loan_date?: string;
-    created_at?: string;
-    payments?: Payment[];
-    total_paid?: number;
-    progress_percentage?: number;
-}
+export type Loan = LoanRow;
 
 // LLM parser response (matches our new API contract)
 type Action = "create_loan" | "add_payment" | "get_loans" | "delete_loan" | "unknown";
@@ -106,54 +71,16 @@ const fmtPercent = (n: number, digits = 1) => `${n.toFixed(digits)}%`;
 const toISO = (d: Date) => d.toISOString().slice(0, 10);
 
 function deriveLoan(loan: Loan) {
-    const payments = (loan.payments ?? []).slice().sort((a, b) => a.payment_date.localeCompare(b.payment_date));
-    const total_paid = typeof loan.total_paid === "number" ? loan.total_paid : payments.reduce((s, p) => s + p.amount, 0);
-    const remaining = loan.current_balance;
-    const progress_pct = Math.min(100, Math.max(0, (total_paid / Math.max(1, loan.original_amount)) * 100));
-    const is_paid_off = remaining <= 0.000001;
-
-    let avgPayment: number | undefined;
-    let avgDays: number | undefined;
-    let projectedPayoff: string | undefined;
-
-    if (payments.length > 0 && remaining > 0) {
-        const amounts = payments.map((p) => p.amount);
-        const total = amounts.reduce((s, a) => s + a, 0);
-        avgPayment = total / payments.length;
-
-        if (payments.length >= 2) {
-            const dayDiffs: number[] = [];
-            for (let i = 1; i < payments.length; i++) {
-                const prev = new Date(payments[i - 1].payment_date);
-                const curr = new Date(payments[i].payment_date);
-                const diffDays = Math.max(1, Math.round((+curr - +prev) / 86400000));
-                dayDiffs.push(diffDays);
-            }
-            avgDays = Math.round(dayDiffs.reduce((s, d) => s + d, 0) / dayDiffs.length);
-        }
-
-        const last = payments[payments.length - 1];
-        if (avgPayment && avgPayment > 0 && avgDays && last?.payment_date) {
-            const intervals = Math.ceil(remaining / avgPayment);
-            const d = new Date(last.payment_date);
-            d.setDate(d.getDate() + intervals * avgDays);
-            projectedPayoff = toISO(d);
-        }
-    }
-
-    return {
-        ...loan,
-        payments,
-        total_paid,
-        remaining,
-        progress_pct,
-        is_paid_off,
-        avgPayment,
-        avgDays,
-        projectedPayoff,
-        first_payment: payments[0]?.payment_date,
-        last_payment: payments[payments.length - 1]?.payment_date,
-    };
+    // Use the shared derivation to ensure canonical logic
+    const base = deriveLoanShared(loan as any);
+    const remaining = base.remaining_balance;
+    const progress_pct = base.progress_percentage;
+    const avgDays = base.average_days_between_payments;
+    const projectedPayoff = base.projected_payoff_date;
+    const payments = base.payments ?? [];
+    const total_paid = base.total_paid;
+    const is_paid_off = base.is_paid_off;
+    return { ...base, payments, total_paid, remaining, progress_pct, is_paid_off, avgDays, projectedPayoff } as any;
 }
 
 function summarizePortfolio(loans: ReturnType<typeof deriveLoan>[]) {

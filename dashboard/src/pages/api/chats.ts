@@ -3,16 +3,16 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 
 // Prefer service role on the server (stays private), fallback to anon if needed
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+const NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const SERVICE_KEY =
   (process.env.SUPABASE_SERVICE_ROLE_KEY as string) ||
   (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string);
 
-if (!SUPABASE_URL || !SERVICE_KEY) {
+if (!NEXT_PUBLIC_SUPABASE_URL || !SERVICE_KEY) {
   console.warn("[/api/chats] Missing Supabase env vars");
 }
 
-const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
+const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false },
 });
 
@@ -83,7 +83,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error) throw error;
 
     const sessions = new Map<string, SessionSummary>();
-    const bySession = new Map<string, ChatRow[]>();
 
     (data ?? []).forEach((r: any) => {
       const sid = r.session_id as string;

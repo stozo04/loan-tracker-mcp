@@ -13,8 +13,8 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const NEXT_PUBLIC_SUPABASE_URL = Deno.env.get("NEXT_PUBLIC_SUPABASE_URL")!;
+const NEXT_PUBLIC_SUPABASE_ANON_KEY = Deno.env.get("NEXT_PUBLIC_SUPABASE_ANON_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,6 +47,14 @@ function isISODate(s: unknown): s is string {
   return typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 }
 
+function normalizePaidBy(v?: string): "Steven" | "Katerina" {
+  if (!v) return "Steven";
+  const p = v.trim().toLowerCase();
+  if (p === "i" || p === "me" || p === "myself" || p === "steven") return "Steven";
+  if (p === "katerina") return "Katerina";
+  return "Steven";
+}
+
 async function resolveLoanIdByName(
   supabase: ReturnType<typeof createClient>,
   name: string,
@@ -73,7 +81,7 @@ serve(async (req) => {
     }
     // Forward the caller's JWT so RLS works
     const authHeader = req.headers.get("Authorization") ?? "";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
 
@@ -169,12 +177,14 @@ serve(async (req) => {
         ? payment_date
         : new Date().toISOString().slice(0, 10);
 
+      const paidBy = normalizePaidBy(paid_by as string | undefined);
+
       // 1) Insert payment
       const { error: pErr } = await supabase.from("loan_tracker_payments").insert([
         {
           loan_id: id,
           amount,
-          paid_by,
+          paid_by: paidBy,
           payment_date: iso,
         },
       ]);
@@ -205,7 +215,7 @@ serve(async (req) => {
         if (updErr) throw updErr;
       }
 
-      return ok({ loan_id: id, amount, paid_by, payment_date: iso });
+      return ok({ loan_id: id, amount, paid_by: paidBy, payment_date: iso });
     }
 
     // GET LOANS (returns loans + payments; UI filters if it asked for a specific loan)

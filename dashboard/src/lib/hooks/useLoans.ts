@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
-import { supabase, Loan, Payment } from '@/lib/supabase'
+import { callLoanManager } from '@/lib/loan-manager'
+import type { Loan as LoanRow, LoanComputed } from '../../../../src/index'
+import { deriveLoan } from '../../../../src/index'
 
-export type LoanWithPayments = Loan & {
-  payments: Payment[]
-  total_paid: number
-  progress_percentage: number
-}
+export type LoanWithPayments = LoanComputed
 
 export function useLoans() {
   const [loans, setLoans] = useState<LoanWithPayments[]>([])
@@ -13,41 +11,19 @@ export function useLoans() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchLoans()
+    void fetchLoans()
   }, [])
 
   async function fetchLoans() {
+    setLoading(true)
+    setError(null)
     try {
-      const { data: loansData, error: loansError } = await supabase
-        .from('loan_tracker_loans')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const { data } = await callLoanManager<{ success: true; data: LoanRow[] }>({ action: 'get_loans' })
+      const mapped: LoanWithPayments[] = (data || []).map((loan) => deriveLoan(loan as any))
 
-      if (loansError) throw loansError
-
-      const { data: paymentsData, error: paymentsError } = await supabase
-        .from('loan_tracker_payments')
-        .select('*')
-        .order('payment_date', { ascending: false })
-
-      if (paymentsError) throw paymentsError
-
-      const loansWithPayments: LoanWithPayments[] = loansData.map(loan => {
-        const loanPayments = paymentsData.filter(payment => payment.loan_id === loan.id)
-        const totalPaid = loanPayments.reduce((sum, payment) => sum + payment.amount, 0)
-        const progressPercentage = (totalPaid / loan.original_amount) * 100
-
-        return {
-          ...loan,
-          payments: loanPayments,
-          total_paid: totalPaid,
-          progress_percentage: Math.min(progressPercentage, 100)
-        }
-      })
-
-      setLoans(loansWithPayments)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setLoans(mapped)
+    } catch (err: any) {
+      setError(err?.message || 'Failed to load loans')
     } finally {
       setLoading(false)
     }

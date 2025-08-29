@@ -4,9 +4,7 @@ dashboard/node_modules/
 dashboard/.next/
 
 # Environment files
-.env
 .env.local
-.env.*.local
 
 # Build outputs  
 dist/

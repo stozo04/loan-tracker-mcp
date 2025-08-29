@@ -41,19 +41,32 @@ Supabase function (from repo root):
 - Exports: export types and values explicitly where helpful (`export type { Foo }`, `export { bar }`).
 - Imports: in dashboard prefer `@/` aliased imports where configured.
 
+### Cross-app imports (shared helpers)
+
+- The dashboard imports types and helpers from the root `src/index.ts` to keep derivation logic canonical (no duplication in the UI).
+- Use relative paths based on the file location.
+  - From `dashboard/src/components/*`: `../../../src/index`
+  - From `dashboard/src/lib/hooks/*`: `../../../../src/index`
+- Prefer using `deriveLoan`, `summarizePortfolio`, and exported types (`Loan`, `LoanComputed`) from the shared module instead of re-implementing logic in the dashboard.
+- If you later add a path alias (e.g., `@shared`) in Next/TS configs, update imports project-wide and the docs.
+
 ## Testing
 - Smoke scripts (require functioning Supabase + deployed function):
   - From repo root: `node test-edge-function.js`, `node test-create-loan.js`, `node test-payment.js`, `node test-full-flow.js`.
-  - These use `SUPABASE_URL` and `SUPABASE_ANON_KEY` from `.env`.
+  - These use `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from `.env`.
 - Manual API checks via curl/postman: POST to `/functions/v1/loan-manager` with `Authorization: Bearer <JWT>`.
 - UI manual testing: run `cd dashboard && npm run dev` and browse `http://localhost:3000`.
 
 When adding automated tests later, focus on behavior and public APIs rather than implementation details. Prefer a11y-first queries for UI tests. Avoid testing Tailwind class names or specific HTML tags; test outcomes.
 
+## Build Notes
+
+- Next.js may warn that it inferred the workspace root due to multiple lockfiles. You can ignore the warning, remove `dashboard/package-lock.json`, or set `turbopack.root` in `dashboard/next.config.ts` to silence it.
+
 ## Public API
 The helper’s public API is defined in `src/index.ts`.
 
-- Keep exported functions stable (`createLoan`, `addPayment`, `getLoans`, `deleteLoan`) and documented inline when behavior changes.
+- Keep exported functions stable (`createLoan`, `addPayment`, `getLoans`, `deleteLoan`) and document inline when behavior changes.
 - Ensure exported types mirror the Edge Function responses and stay in sync when the function contract evolves.
 
 ## Commit Messages
