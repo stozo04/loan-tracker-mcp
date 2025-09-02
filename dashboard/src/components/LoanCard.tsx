@@ -102,6 +102,15 @@ export function LoanCard({ loan }: LoanCardProps) {
             {loan.term_months} months
           </span>
         </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600 flex items-center">
+            <DollarSign className="w-4 h-4 mr-1" />
+            Est. Monthly
+          </span>
+          <span className="font-semibold text-gray-900">
+            ${loan.estimated_monthly_payment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
+        </div>
       </div>
 
       {/* Recent Payments */}

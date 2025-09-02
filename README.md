@@ -117,6 +117,8 @@ CREATE TABLE loan_tracker_loans (
   loan_type text NOT NULL DEFAULT 'general',
   term_months integer NOT NULL,
   loan_date date NOT NULL,
+  -- Immutable, interest-free estimate at creation time
+  estimated_monthly_payment numeric(12,2),
   created_date date NOT NULL DEFAULT CURRENT_DATE,
   created_at timestamp with time zone DEFAULT now()
 );
@@ -217,4 +219,3 @@ Small, focused PRs are welcome. See `AGENTS.md` for workflow and Definition of D
 MIT
 
 — Made by Steven Gates (stozo04)
-

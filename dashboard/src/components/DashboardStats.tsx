@@ -11,6 +11,10 @@ export function DashboardStats({ loans }: DashboardStatsProps) {
   const totalOriginalAmount = loans.reduce((sum, loan) => sum + loan.original_amount, 0)
   const totalPaid = loans.reduce((sum, loan) => sum + loan.total_paid, 0)
   const totalRemaining = loans.reduce((sum, loan) => sum + loan.current_balance, 0)
+  const totalMonthly = loans.reduce(
+    (sum, loan) => sum + (loan.estimated_monthly_payment ?? (loan.original_amount / Math.max(1, loan.term_months))),
+    0
+  )
 
   // Get current month payments
   const currentMonthStart = startOfMonth(new Date())
@@ -48,6 +52,15 @@ export function DashboardStats({ loans }: DashboardStatsProps) {
       borderColor: 'border-red-200'
     },
     {
+      title: 'Total Monthly Payment',
+      value: `$${totalMonthly.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      subtext: 'Sum of estimated monthly payments',
+      icon: DollarSign,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      borderColor: 'border-indigo-200'
+    },
+    {
       title: 'Total Paid Off',
       value: `$${totalPaid.toLocaleString()}`,
       subtext: `${Math.round(totalProgress)}% of all loans`,
@@ -77,24 +90,26 @@ export function DashboardStats({ loans }: DashboardStatsProps) {
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {stats.map((stat, index) => (
-        <div
-          key={index}
-          className={`bg-white rounded-xl p-6 shadow-lg border-2 ${stat.borderColor} hover:shadow-xl transition-all duration-300`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-              <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              <p className="text-xs text-gray-500 mt-1">{stat.subtext}</p>
-            </div>
-            <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-              <stat.icon className={`w-6 h-6 ${stat.color}`} />
+    <div className="mb-8 overflow-x-auto">
+      <div className="flex flex-nowrap gap-6 min-w-max">
+        {stats.map((stat, index) => (
+          <div
+            key={index}
+            className={`shrink-0 min-w-[260px] bg-white rounded-xl p-6 shadow-lg border-2 ${stat.borderColor} hover:shadow-xl transition-all duration-300`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1 whitespace-nowrap">{stat.title}</p>
+                <p className="text-2xl font-bold text-gray-900 whitespace-nowrap">{stat.value}</p>
+                <p className="text-xs text-gray-500 mt-1">{stat.subtext}</p>
+              </div>
+              <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+                <stat.icon className={`w-6 h-6 ${stat.color}`} />
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

@@ -140,7 +140,7 @@ serve(async (req) => {
             loan_date, // store as date or text column formatted YYYY-MM-DD
           },
         ])
-        .select()
+        .select("*")
         .single();
 
       if (error) throw error;
@@ -223,7 +223,7 @@ serve(async (req) => {
       const { data: loans, error: lErr } = await supabase
         .from("loan_tracker_loans")
         .select(
-          "id,name,original_amount,current_balance,loan_type,term_months,loan_date,created_at",
+          "id,name,original_amount,current_balance,loan_type,term_months,loan_date,created_at,estimated_monthly_payment",
         )
         .order("created_at", { ascending: false });
 

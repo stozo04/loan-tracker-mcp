@@ -163,6 +163,9 @@ function LoanCard({ loan, onQuickAdd }: { loan: ReturnType<typeof deriveLoan>; o
                     <div>
                         Remaining: <span className="font-medium text-gray-800">{fmtCurrency(Math.max(0, loan.remaining))}</span>
                     </div>
+                    <div>
+                        Est. Monthly: <span className="font-medium text-gray-800">{fmtCurrency(loan.estimated_monthly_payment ?? (loan.original_amount / Math.max(1, loan.term_months)))}</span>
+                    </div>
                 </div>
                 <div className="mt-2">
                     <ProgressBar pct={loan.progress_pct} />

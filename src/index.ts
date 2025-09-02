@@ -40,6 +40,8 @@ export interface Loan {
   term_months: number;
   loan_date: string;     // YYYY-MM-DD
   created_at?: string;   // ISO
+  // Immutable at creation (interest-free): original_amount / term_months
+  estimated_monthly_payment?: number;
   // When fetched via get_loans, the function attaches:
   payments?: Payment[];
   total_paid?: number;
@@ -163,6 +165,7 @@ export interface LoanComputed extends Loan {
   progress_percentage: number;   // ensure present (0..100)
   is_paid_off: boolean;
   remaining_balance: number;     // == current_balance
+  estimated_monthly_payment: number;
   first_payment_date?: string;
   last_payment_date?: string | null;
   payments_count: number;
@@ -252,6 +255,13 @@ export function deriveLoan(loan: Loan): LoanComputed {
   const progress_percentage = Math.min(100, Math.max(0, (total_paid / Math.max(1, loan.original_amount)) * 100));
   const is_paid_off = remaining_balance <= 0.000001;
 
+  // Interest-free estimate; immutable. Fallback compute if not provided by API.
+  const n = Math.max(1, loan.term_months || 0);
+  const est = typeof loan.estimated_monthly_payment === "number"
+    ? loan.estimated_monthly_payment
+    : loan.original_amount / n;
+  const estimated_monthly_payment = Math.round(est * 100) / 100;
+
   const sorted = [...payments].sort((a, b) => a.payment_date.localeCompare(b.payment_date));
   const first_payment_date = sorted[0]?.payment_date;
   const last_payment_date = (loan as any).last_payment ?? sorted[sorted.length - 1]?.payment_date;
@@ -267,6 +277,7 @@ export function deriveLoan(loan: Loan): LoanComputed {
     progress_percentage,
     is_paid_off,
     remaining_balance,
+    estimated_monthly_payment,
     first_payment_date,
     last_payment_date,
     payments_count,
