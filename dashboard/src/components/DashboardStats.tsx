@@ -11,7 +11,7 @@ export function DashboardStats({ loans }: DashboardStatsProps) {
   const totalOriginalAmount = loans.reduce((sum, loan) => sum + loan.original_amount, 0)
   const totalPaid = loans.reduce((sum, loan) => sum + loan.total_paid, 0)
   const totalRemaining = loans.reduce((sum, loan) => sum + loan.current_balance, 0)
-  const totalMonthly = loans.reduce(
+  const totalMonthly = loans.filter(loan => !loan.is_paid_off).reduce(
     (sum, loan) => sum + (loan.estimated_monthly_payment ?? (loan.original_amount / Math.max(1, loan.term_months))),
     0
   )
@@ -54,7 +54,7 @@ export function DashboardStats({ loans }: DashboardStatsProps) {
     {
       title: 'Total Monthly Payment',
       value: `$${totalMonthly.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      subtext: 'Sum of estimated monthly payments',
+      subtext: 'Sum of estimated monthly payments for open loans',
       icon: DollarSign,
       color: 'text-indigo-600',
       bgColor: 'bg-indigo-50',
