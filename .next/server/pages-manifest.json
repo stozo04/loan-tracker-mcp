@@ -1,9 +1,0 @@
-{
-  "/_app": "pages/_app.js",
-  "/_document": "pages/_document.js",
-  "/_error": "pages/_error.js",
-  "/api/chats": "pages/api/chats.js",
-  "/api/parse-command": "pages/api/parse-command.js",
-  "/chat/logs": "pages/chat/logs.html",
-  "/404": "pages/404.html"
-}
