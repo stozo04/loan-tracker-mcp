@@ -1,19 +1,21 @@
 {
   "name": "loan-tracker-mcp",
-  "version": "1.0.0",
-  "type": "module",
-  "description": "",
-  "main": "index.js",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "build": "tsc",
-    "start": "tsx src/index.ts",
-    "dev": "nodemon --exec tsx src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
+    "chrono-node": "^2.8.4",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.541.0",
+    "next": "15.5.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "recharts": "^3.1.2",
     "@modelcontextprotocol/sdk": "^1.17.4",
     "@supabase/supabase-js": "^2.56.0",
     "dotenv": "^17.2.1",
@@ -21,9 +23,16 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
     "nodemon": "^3.1.10",
     "tsx": "^4.20.4",
-    "typescript": "^5.9.2"
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
