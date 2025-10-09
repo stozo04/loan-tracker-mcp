@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import { LoanWithPayments } from '@/lib/hooks/useLoans'
 import { format } from 'date-fns'
 import { Calendar, DollarSign, TrendingDown, User } from 'lucide-react'
@@ -7,6 +10,7 @@ interface LoanCardProps {
 }
 
 export function LoanCard({ loan }: LoanCardProps) {
+  const [showAllPayments, setShowAllPayments] = useState(false)
   const progressPercentage = Math.min((loan.total_paid / loan.original_amount) * 100, 100)
   const remainingAmount = loan.current_balance
   const isPaidOff = remainingAmount === 0
@@ -118,7 +122,7 @@ export function LoanCard({ loan }: LoanCardProps) {
         <div className="border-t pt-4">
           <h4 className="text-sm font-medium text-gray-900 mb-2">Recent Payments</h4>
           <div className="space-y-2">
-            {loan.payments.slice(0, 2).map((payment) => (
+            {(showAllPayments ? loan.payments : loan.payments.slice(0, 2)).map((payment) => (
               <div key={payment.id} className="flex items-center justify-between text-sm">
                 <div className="flex items-center">
                   <User className="w-3 h-3 mr-1 text-gray-400" />
@@ -132,9 +136,15 @@ export function LoanCard({ loan }: LoanCardProps) {
               </div>
             ))}
             {loan.payments.length > 2 && (
-              <p className="text-xs text-gray-500">
-                +{loan.payments.length - 2} more payments
-              </p>
+              <button
+                type="button"
+                className="text-xs font-medium text-blue-600 hover:text-blue-800"
+                onClick={() => setShowAllPayments((prev) => !prev)}
+              >
+                {showAllPayments
+                  ? 'Show fewer payments'
+                  : `Show ${loan.payments.length - 2} more payment${loan.payments.length - 2 === 1 ? '' : 's'}`}
+              </button>
             )}
           </div>
         </div>
