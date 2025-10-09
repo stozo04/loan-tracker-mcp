@@ -10,6 +10,7 @@ import {
     Tooltip as ReTooltip,
 } from "recharts";
 import { LLMParseResponse } from "@/lib/parse-command";
+import { getSupabaseBrowserClient } from "@/lib/supabase-browser";
 type GetLoansParamsUI = { loan_name?: string };
 
 // ────────────────────────────────────────────────────────────
@@ -254,6 +255,9 @@ export default function AiLoanAssistantPro({ onLoanUpdate }: { onLoanUpdate?: ()
         content: string,
         extra?: Partial<LLMParseResponse>
       ) {
+        const supabase = getSupabaseBrowserClient();
+        if (!supabase) return;
+
         try {
           await supabase.from("loan_tracker_chat_messages").insert([{
             session_id: sessionId,
