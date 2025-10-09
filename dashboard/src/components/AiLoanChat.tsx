@@ -715,7 +715,7 @@ export default function AiLoanAssistantPro({ onLoanUpdate }: { onLoanUpdate?: ()
                         </div>
                         <div>
                             <div className="font-semibold text-gray-800">AI Loan Assistant</div>
-                            <div className="text-xs text-gray-500">Ask me to add payments, create loans, or summarize</div>
+                            <div className="text-xs text-gray-500">Ask me to create loans, add payments, or summarize</div>
                         </div>
                     </div>
 

@@ -90,18 +90,18 @@ export function DashboardStats({ loans }: DashboardStatsProps) {
   ]
 
   return (
-    <div className="mb-8 overflow-x-auto">
-      <div className="flex flex-nowrap gap-6 min-w-max">
+    <div className="mb-8">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {stats.map((stat, index) => (
           <div
             key={index}
-            className={`shrink-0 min-w-[260px] bg-white rounded-xl p-6 shadow-lg border-2 ${stat.borderColor} hover:shadow-xl transition-all duration-300`}
+            className={`bg-white rounded-xl p-6 shadow-lg border-2 ${stat.borderColor} hover:shadow-xl transition-all duration-300`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1 whitespace-nowrap">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900 whitespace-nowrap">{stat.value}</p>
-                <p className="text-xs text-gray-500 mt-1">{stat.subtext}</p>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-xs text-gray-500 mt-1 leading-snug">{stat.subtext}</p>
               </div>
               <div className={`p-3 rounded-lg ${stat.bgColor}`}>
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />

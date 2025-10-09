@@ -246,10 +246,11 @@ function computeProjection(payments: Payment[], remaining: number): {
 
 /** Compute rich derived fields for one loan row */
 export function deriveLoan(loan: Loan): LoanComputed {
-  const payments: Payment[] = loan.payments ?? [];
+  const rawPayments: Payment[] = loan.payments ?? [];
+  const payments = rawPayments.slice().sort((a, b) => b.payment_date.localeCompare(a.payment_date));
   const total_paid = typeof loan.total_paid === "number"
     ? loan.total_paid
-    : payments.reduce((s, p) => s + p.amount, 0);
+    : rawPayments.reduce((s, p) => s + p.amount, 0);
 
   const remaining_balance = loan.current_balance;
   const progress_percentage = Math.min(100, Math.max(0, (total_paid / Math.max(1, loan.original_amount)) * 100));
@@ -262,13 +263,13 @@ export function deriveLoan(loan: Loan): LoanComputed {
     : loan.original_amount / n;
   const estimated_monthly_payment = Math.round(est * 100) / 100;
 
-  const sorted = [...payments].sort((a, b) => a.payment_date.localeCompare(b.payment_date));
-  const first_payment_date = sorted[0]?.payment_date;
-  const last_payment_date = (loan as any).last_payment ?? sorted[sorted.length - 1]?.payment_date;
+  const paymentsAsc = rawPayments.slice().sort((a, b) => a.payment_date.localeCompare(b.payment_date));
+  const first_payment_date = paymentsAsc[0]?.payment_date;
+  const last_payment_date = (loan as any).last_payment ?? payments[0]?.payment_date ?? paymentsAsc[paymentsAsc.length - 1]?.payment_date;
   const payments_count = payments.length;
 
   const { average_payment, average_days_between_payments, projected_payoff_date } =
-    computeProjection(payments, remaining_balance);
+    computeProjection(rawPayments, remaining_balance);
 
   return {
     ...loan,

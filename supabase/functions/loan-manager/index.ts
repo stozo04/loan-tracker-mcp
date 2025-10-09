@@ -243,10 +243,10 @@ serve(async (req) => {
       // derive totals + sort payments by date
       const result = (loans ?? []).map((l) => {
         const ps = (byLoan[l.id] ?? []).sort((a, b) =>
-          (a.payment_date ?? "").localeCompare(b.payment_date ?? "")
+          (b.payment_date ?? "").localeCompare(a.payment_date ?? "")
         );
         const total_paid = ps.reduce((s, p) => s + (p.amount ?? 0), 0);
-        const last_payment = ps.length ? ps[ps.length - 1].payment_date : null;
+        const last_payment = ps.length ? ps[0].payment_date : null;
         return { ...l, payments: ps, total_paid, last_payment };
       });
 
