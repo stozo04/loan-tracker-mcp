@@ -7,7 +7,7 @@ import { LoanCard } from '@/components/LoanCard'
 import { DashboardStats } from '@/components/DashboardStats'
 import { PaymentChart } from '@/components/PaymentChart'
 import { RecentActivity } from '@/components/RecentActivity'
-import AiLoanAssistantPro from '@/components/AiLoanChat'
+import OpenAIChatbot from '@/components/OpenAIChatbot'
 
 export default function Dashboard() {
   const { loans, loading, error, refetch } = useLoans()
@@ -111,8 +111,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Floating AI assistant */}
-      <AiLoanAssistantPro onLoanUpdate={handleLoanUpdate} />
+      {/* Floating AI assistant (OpenAI Chatbot Kit) */}
+      <div className="fixed bottom-4 right-4 z-50 w-80 h-[520px] md:w-96 md:h-[520px]">
+        <OpenAIChatbot />
+      </div>
     </div>
   )
 }
