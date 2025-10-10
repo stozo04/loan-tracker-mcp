@@ -71,7 +71,6 @@ export default function ChatKitWidget() {
             },
         },
         startScreen: {
-            greeting: "Loan Manager Assistant",
             prompts: [
                 {
                     icon: "circle-question",
@@ -140,52 +139,42 @@ export default function ChatKitWidget() {
     });
 
     return (
-        <div
-            className="position-fixed bottom-0 end-0 mb-4 me-4"
-            style={{ zIndex: 1050 }}
-        >
-            <button
-                type="button"
-                className="btn btn-primary rounded-circle shadow d-flex align-items-center justify-content-center mb-2"
-                style={{
-                    width: 60,
-                    height: 60,
-                    backgroundColor: "#fe9a9b",
-                    borderColor: "#fe9a9b",
-                    display: isOpen ? "none" : "flex",
-                    transform: isTriggerHovered ? "translateY(-4px) scale(1.05)" : "translateY(0) scale(1)",
-                    boxShadow: isTriggerHovered
-                        ? "0 12px 24px rgba(254, 154, 155, 0.45)"
-                        : "0 8px 18px rgba(254, 154, 155, 0.35)",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                }}
-                onClick={() => {
-                    setIsTriggerHovered(false);
-                    setIsOpen(true);
-                }}
-                aria-label="Open chat"
-                onMouseEnter={() => setIsTriggerHovered(true)}
-                onMouseLeave={() => setIsTriggerHovered(false)}
-            >
-                <BsStars size={28} color="#ffffff" />
-            </button>
-            <div
-                style={{
-                    width: 360,
-                    height: 520,
-                    display: isOpen ? "block" : "none",
-                    boxShadow: "0 24px 45px rgba(34, 34, 34, 0.22)",
-                    borderRadius: 18,
-                    transition: "box-shadow 0.25s ease",
-                }}
-            >
-                <ChatKit
-                    ref={chatKitRef}
-                    control={control}
-                    className="chatkit-widget rounded shadow"
-                    style={{ width: "100%", height: "100%" }}
-                />
-            </div>
+        // This component expects its parent to position it (the parent uses `fixed bottom-4 right-4`).
+        // Inside the parent container we position the trigger and panel.
+        <div className="relative w-full h-full" style={{ zIndex: 1050 }}>
+            {/* Trigger button (circular) */}
+            {!isOpen && (
+                <button
+                    type="button"
+                    className={`absolute bottom-4 right-4 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform ${isTriggerHovered ? 'scale-105' : ''}`}
+                    onClick={() => {
+                        setIsTriggerHovered(false);
+                        setIsOpen(true);
+                    }}
+                    aria-label="Open chat"
+                    onMouseEnter={() => setIsTriggerHovered(true)}
+                    onMouseLeave={() => setIsTriggerHovered(false)}
+                    style={{ backgroundColor: '#2563eb', color: '#fff' }}
+                >
+                    <BsStars size={22} />
+                </button>
+            )}
+
+            {/* Chat panel */}
+            {isOpen && (
+                <div className="absolute bottom-16 right-0 bg-white rounded-2xl shadow-2xl overflow-hidden" style={{ width: 360, height: 520 }}>
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+                        <div className="text-base font-semibold text-gray-800">Loan Manager Assistant</div>
+                        <button className="text-sm text-gray-600 px-2 py-1 hover:text-gray-800" onClick={() => setIsOpen(false)} aria-label="Close chat">Close</button>
+                    </div>
+                    <ChatKit
+                        ref={chatKitRef}
+                        control={control}
+                        className="chatkit-widget h-[calc(100%-48px)]"
+                        style={{ width: '100%', height: 'calc(100% - 48px)' }}
+                    />
+                </div>
+            )}
         </div>
     );
 }

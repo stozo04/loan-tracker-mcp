@@ -112,7 +112,7 @@ export default function Dashboard() {
       </div>
 
       {/* Floating AI assistant (OpenAI Chatbot Kit) */}
-      <div className="fixed bottom-4 right-4 z-50 w-80 h-[520px] md:w-96 md:h-[520px]">
+      <div className="fixed bottom-12 right-4 z-50 w-80 h-[520px] md:w-96 md:h-[520px]">
         <OpenAIChatbot />
       </div>
     </div>
