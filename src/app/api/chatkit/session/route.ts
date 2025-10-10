@@ -48,18 +48,41 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
+      // Try to parse the error body from OpenAI for better debugging
+      const text = await response.text().catch(() => "");
+      let parsed: unknown = undefined;
+      try {
+        parsed = text ? JSON.parse(text) : undefined;
+      } catch {
+        parsed = text;
+      }
+
+      // Log the full response for dev debugging
+      console.error('[chatkit/session] OpenAI responded with non-OK status', {
+        status: response.status,
+        statusText: response.statusText,
+        body: parsed,
+      });
+
+      // Narrow parsed to an object with optional 'error' field
+      const parsedObj = typeof parsed === 'object' && parsed !== null ? parsed as Record<string, unknown> : undefined;
       const message =
-        typeof error?.error === "string"
-          ? error.error
-          : error?.error?.message || response.statusText;
-      return NextResponse.json(
-        { error: message || "Unable to create ChatKit session." },
-        { status: response.status }
-      );
+        typeof parsedObj?.error === "string"
+          ? (parsedObj.error as string)
+          : (typeof parsedObj?.error === 'object' && parsedObj?.error !== null && (parsedObj.error as Record<string, unknown>).message)
+          || response.statusText
+          || 'Unable to create ChatKit session.';
+
+      return NextResponse.json({ error: message }, { status: response.status });
     }
 
     const session = await response.json();
+
+    // Log success (useful in dev) with limited data
+    console.debug('[chatkit/session] Created ChatKit session', {
+      has_client_secret: Boolean(session?.client_secret),
+      session_id: session?.id,
+    });
 
     if (!session?.client_secret) {
       return NextResponse.json(
