@@ -8,6 +8,7 @@ import { DashboardStats } from '@/components/DashboardStats'
 import { PaymentChart } from '@/components/PaymentChart'
 import { RecentActivity } from '@/components/RecentActivity'
 import AiLoanAssistantPro from '@/components/AiLoanChat'
+// Test
 
 export default function Dashboard() {
   const { loans, loading, error, refetch } = useLoans()
