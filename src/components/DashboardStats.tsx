@@ -1,6 +1,7 @@
 import { LoanWithPayments } from '@/lib/hooks/useLoans'
 import { DollarSign, TrendingUp, Users, Calendar } from 'lucide-react'
 import { startOfMonth, endOfMonth } from 'date-fns'
+import { parseLocalISODate } from '@/lib/date'
 
 interface DashboardStatsProps {
   loans: LoanWithPayments[]
@@ -22,7 +23,7 @@ export function DashboardStats({ loans }: DashboardStatsProps) {
   
   const currentMonthPayments = loans.flatMap(loan => 
     loan.payments.filter(payment => {
-      const paymentDate = new Date(payment.payment_date)
+      const paymentDate = parseLocalISODate(payment.payment_date)
       return paymentDate >= currentMonthStart && paymentDate <= currentMonthEnd
     })
   )

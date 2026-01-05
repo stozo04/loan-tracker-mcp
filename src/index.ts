@@ -1,4 +1,4 @@
-// src/index.ts — Web app caller + summaries for the loan tracker
+// src/index.ts – Web app caller + summaries for the loan tracker
 //
 // What this file does:
 // 1) Calls your Supabase Edge Function "loan-manager" with Authorization: Bearer <JWT>.
@@ -11,6 +11,8 @@
 //   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJI...   // anon (public) key
 //
 // NOTE: This file does NOT use a shared supabase client. It uses plain fetch per call.
+
+import { parseISO } from "date-fns";
 
 const NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -193,7 +195,7 @@ export interface PortfolioSummary {
 
 function parseDateSafe(s?: string): Date | undefined {
   if (!s) return undefined;
-  const d = new Date(s);
+  const d = parseISO(s);
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 

@@ -1,5 +1,6 @@
 import { LoanWithPayments } from '@/lib/hooks/useLoans'
 import { format, formatDistanceToNow } from 'date-fns'
+import { parseLocalISODate } from '@/lib/date'
 import { Activity, DollarSign, User, Calendar } from 'lucide-react'
 
 interface RecentActivityProps {
@@ -16,7 +17,7 @@ export function RecentActivity({ loans }: RecentActivityProps) {
         loan_type: loan.loan_type
       }))
     )
-    .sort((a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
+    .sort((a, b) => parseLocalISODate(b.payment_date).getTime() - parseLocalISODate(a.payment_date).getTime())
     .slice(0, 8) // Show last 8 activities
 
   if (allPayments.length === 0) {
@@ -66,7 +67,7 @@ export function RecentActivity({ loans }: RecentActivityProps) {
                   <div className="flex items-center mt-1 space-x-3">
                     <span className="inline-flex items-center text-xs text-gray-500">
                       <Calendar className="w-3 h-3 mr-1" />
-                      {format(new Date(payment.payment_date), 'MMM d, yyyy')}
+                      {format(parseLocalISODate(payment.payment_date), 'MMM d, yyyy')}
                     </span>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                       {payment.loan_type}
@@ -75,7 +76,7 @@ export function RecentActivity({ loans }: RecentActivityProps) {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-gray-500">
-                    {formatDistanceToNow(new Date(payment.payment_date), { addSuffix: true })}
+                    {formatDistanceToNow(parseLocalISODate(payment.payment_date), { addSuffix: true })}
                   </p>
                 </div>
               </div>

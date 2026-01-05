@@ -1,6 +1,7 @@
 import { LoanWithPayments } from '@/lib/hooks/useLoans'
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { format } from 'date-fns'
+import { parseLocalISODate } from '@/lib/date'
 import { TrendingUp } from 'lucide-react'
 
 interface PaymentChartProps {
@@ -27,7 +28,7 @@ export function PaymentChart({ loans }: PaymentChartProps) {
 
   // Group payments by month and person
   const paymentsByMonth = allPayments.reduce((acc, payment) => {
-    const monthKey = format(new Date(payment.payment_date), 'MMM yyyy')
+    const monthKey = format(parseLocalISODate(payment.payment_date), 'MMM yyyy')
     
     if (!acc[monthKey]) {
       acc[monthKey] = {

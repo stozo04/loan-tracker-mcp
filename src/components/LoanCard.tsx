@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { LoanWithPayments } from '@/lib/hooks/useLoans'
 import { format } from 'date-fns'
+import { parseLocalISODate } from '@/lib/date'
 import { Calendar, DollarSign, TrendingDown, User } from 'lucide-react'
 
 interface LoanCardProps {
@@ -127,7 +128,7 @@ export function LoanCard({ loan }: LoanCardProps) {
                 <div className="flex items-center">
                   <User className="w-3 h-3 mr-1 text-gray-400" />
                   <span className="text-gray-600">
-                    {payment.paid_by} • {format(new Date(payment.payment_date), 'MMM d')}
+                    {payment.paid_by} • {format(parseLocalISODate(payment.payment_date), 'MMM d')}
                   </span>
                 </div>
                 <span className="font-medium text-gray-900">
